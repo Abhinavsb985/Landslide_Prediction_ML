@@ -1,8 +1,6 @@
 pandas
 scikit-learn
-requests
-supabase
+numpy
 schedule
+requests
 python-dotenv
-flask
-gunicorn
