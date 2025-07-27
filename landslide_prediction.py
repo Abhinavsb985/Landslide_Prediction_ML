@@ -1,17 +1,23 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report, r2_score, confusion_matrix
-from sklearn.preprocessing import LabelEncoder
+# Add path to current directory to make sure we can find the data file
+import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(current_dir)
 
-# --- 1. Load and Prepare the Data ---
+def main():
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report, r2_score, confusion_matrix
+    from sklearn.preprocessing import LabelEncoder
 
-# Load the dataset
-try:
-    data = pd.read_csv('landslide_data_500.csv')
-except FileNotFoundError:
-    print("Error: 'landslide_data.csv' not found. Make sure the CSV file is in the same directory.")
-    exit()
+    # --- 1. Load and Prepare the Data ---
+    data_file = os.path.join(current_dir, 'landslide_data_500.csv')
+    if not os.path.exists(data_file):
+        raise FileNotFoundError(f"Error: {data_file} not found. Make sure the CSV file is in the correct directory.")
+
+    # Load the dataset
+    data = pd.read_csv(data_file)
 
 # Convert categorical 'soil_type' to numbers
 le = LabelEncoder()
