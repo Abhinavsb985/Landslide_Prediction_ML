@@ -99,19 +99,35 @@ print("-" * 30)
 
 print("\n--- Example Prediction for New Data ---")
 
-# Create a new data point for today's conditions and tomorrow's forecast
-# You can change these values to see different predictions
+# Import weather data module
+from weather_data import get_weather_data_shirur, SHIRUR_INFO
+
+# Fetch real-time weather data for Shirur
+weather_data = get_weather_data_shirur()
+
+# Create a new data point using real weather data and Shirur-specific information
 new_data_today = pd.DataFrame({
-    'rainfall_24h_mm': [10],
-    'rainfall_3h_mm': [4],
-    'soil_moisture_pct': [7],
-    'pore_water_pressure_kpa': [6],
-    'soil_type': ['clay'],  # Use the original categorical feature
-    'slope_degrees': [37],
-    'expected_tomorrow_rainfall_24h_mm': [45]  # Tomorrow's forecasted 24h rainfall
+    'rainfall_24h_mm': [weather_data['current_24h_rain']],
+    'rainfall_3h_mm': [weather_data['current_3h_rain']],
+    'soil_moisture_pct': [SHIRUR_INFO['soil_moisture_pct']],  # Will be replaced with sensor data
+    'pore_water_pressure_kpa': [SHIRUR_INFO['pore_water_pressure_kpa']],  # Will be replaced with sensor data
+    'soil_type': [SHIRUR_INFO['soil_type']],
+    'slope_degrees': [SHIRUR_INFO['slope_degrees']],
+    'expected_tomorrow_rainfall_24h_mm': [weather_data['tomorrow_24h_rain']]
 })
 
-print("Input data for today:")
+print("\n=== Current Conditions in Shirur ===")
+print(f"Last 24 Hours Rainfall: {weather_data['current_24h_rain']:.1f} mm")
+print(f"Last 3 Hours Rainfall: {weather_data['current_3h_rain']:.1f} mm")
+print(f"Soil Type: {SHIRUR_INFO['soil_type']}")
+print(f"Current Soil Moisture: {SHIRUR_INFO['soil_moisture_pct']:.1f}%")
+print(f"Current Pore Water Pressure: {SHIRUR_INFO['pore_water_pressure_kpa']:.1f} kPa")
+print(f"Terrain Slope: {SHIRUR_INFO['slope_degrees']:.1f}°")
+
+print("\n=== Weather Forecast ===")
+print(f"Expected Rainfall Tomorrow: {weather_data['tomorrow_24h_rain']:.1f} mm")
+
+print("\n=== Full Input Data ===")
 print(new_data_today)
 
 # Preprocess the new data (encode 'soil_type')
@@ -141,6 +157,47 @@ elif prob >= 0.3:
 else:
     risk_label = "Low Risk"
 print(f"Predicted Landslide Risk for Tomorrow: {risk_label} (Probability: {prob:.2f})")
+
+# Calculate current model performance metrics
+current_accuracy = accuracy
+current_mae = mae
+current_r2 = r2
+
+print("\n=== Current Model Performance ===")
+print(f"Model Accuracy: {current_accuracy:.4f}")
+print(f"Mean Absolute Error: {current_mae:.4f}")
+print(f"R-squared Score: {current_r2:.4f}")
+
+# Save prediction results to database
+from database_connection import save_prediction_to_db
+
+# Prepare the prediction data
+predictions = {
+    'soil_moisture': predicted_conditions_new[0, 0],
+    'pore_pressure': predicted_conditions_new[0, 1],
+    'model_accuracy': current_accuracy,
+    'model_mae': current_mae,
+    'model_r2': current_r2
+}
+
+risk_assessment = {
+    'risk_level': risk_label,
+    'probability': prob
+}
+
+# Save to database
+save_result = save_prediction_to_db(
+    weather_data=weather_data,
+    shirur_info=SHIRUR_INFO,
+    predictions=predictions,
+    risk_assessment=risk_assessment
+)
+
+if save_result:
+    print("Prediction results and model metrics saved to database successfully")
+else:
+    print("Warning: Failed to save prediction results to database")
+
 print("-" * 30)
 
 # To run this code:

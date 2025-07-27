@@ -1,0 +1,6 @@
+pandas
+scikit-learn
+requests
+supabase
+schedule
+python-dotenv
