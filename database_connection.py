@@ -76,3 +76,33 @@ def get_historical_data(days=7):
     except Exception as e:
         print(f"Error retrieving historical data: {e}")
         return []
+
+def get_latest_sensor_data():
+    """Fetch the most recent sensor reading"""
+    try:
+        result = supabase.table('real_sensor_data')\
+            .select('*')\
+            .limit(1)\
+            .execute()
+        
+        if result.data:
+            return result.data[0]
+        return None
+        
+    except Exception as e:
+        print(f"Error fetching latest sensor data: {e}")
+        return None
+
+def save_sensor_reading(soil_moisture, pore_pressure):
+    """Save new sensor reading to database"""
+    try:
+        data = {
+            'soil_moisture': soil_moisture,
+            'pore_pressure': pore_pressure,
+            'timestamp': datetime.now().isoformat()
+        }
+        result = supabase.table('real_sensor_data').insert(data).execute()
+        return result.data
+    except Exception as e:
+        print(f"Error saving sensor reading: {e}")
+        return None

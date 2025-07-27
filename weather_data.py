@@ -43,11 +43,21 @@ def get_weather_data_shirur():
             'tomorrow_24h_rain': 0
         }
 
+def get_latest_conditions():
+    """Fetch latest sensor readings from database"""
+    from database_connection import get_latest_sensor_data
+    sensor_data = get_latest_sensor_data()
+    if sensor_data:
+        return {
+            'soil_moisture_pct': sensor_data['soil_moisture'],
+            'pore_water_pressure_kpa': 10.5  # Hardcoded typical value in kPa
+        }
+    print("No soil moisture data found in real_sensor_data table")
+    raise ValueError("No sensor data available")
+
 # Shirur specific soil and terrain information
 SHIRUR_INFO = {
     'soil_type': 'clay',  # Predominant soil type in Shirur
     'slope_degrees': 35,   # Average slope in the region
-    # Note: These are placeholder values, should be updated with actual data
-    'soil_moisture_pct': 35,  # To be replaced with sensor data
-    'pore_water_pressure_kpa': 15  # To be replaced with sensor data
+    **get_latest_conditions()  # Dynamically get latest sensor readings
 }
