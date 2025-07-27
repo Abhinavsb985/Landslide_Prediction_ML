@@ -15,7 +15,10 @@ last_error = None
 
 def run_prediction_loop():
     global last_prediction_time, last_prediction_status, last_error
-    print(f"[{datetime.now()}] Prediction thread started!")
+    
+    # Wait for 10 seconds before starting predictions to let Flask initialize
+    time.sleep(10)
+    
     while True:
         try:
             print(f"\n[{datetime.now()}] Starting landslide prediction...")
@@ -37,17 +40,16 @@ def run_prediction_loop():
             print(f"[{datetime.now()}] Error in prediction:")
             print(traceback.format_exc())
         
-        print(f"[{datetime.now()}] Waiting 3 minutes for next prediction...")
         # Wait for next interval
-        time.sleep(180)  # 180 seconds = 3 minutes
+        time.sleep(300)  # 300 seconds = 5 minutes
 
-def start_prediction_thread():
-    try:
-        prediction_thread = threading.Thread(target=run_prediction_loop, daemon=True)
-        prediction_thread.start()
-        print("Prediction thread started successfully")
-    except Exception as e:
-        print(f"Error starting prediction thread: {str(e)}")
+# Start prediction thread
+try:
+    prediction_thread = threading.Thread(target=run_prediction_loop, daemon=True)
+    prediction_thread.start()
+    print("Prediction thread started successfully")
+except Exception as e:
+    print(f"Error starting prediction thread: {str(e)}")
 
 @app.route('/')
 def health_check():
@@ -60,6 +62,5 @@ def health_check():
     })
 
 if __name__ == "__main__":
-    start_prediction_thread()
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
