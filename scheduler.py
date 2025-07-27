@@ -30,16 +30,12 @@ def main():
     schedule.every(10).minutes.do(run_prediction)
     
     print("Scheduler started. Will run predictions every 10 minutes.")
-    print("Press Ctrl+C to stop.")
     
     # Keep the script running
     while True:
         try:
             schedule.run_pending()
             time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nShutting down scheduler...")
-            break
         except Exception as e:
             print(f"Error in scheduler: {str(e)}")
             # Wait a bit before retrying

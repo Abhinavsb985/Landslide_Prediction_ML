@@ -18,19 +18,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Create a health check file
-RUN echo "print('Health check passed')" > health_check.py
-
-# Make sure the scheduler script is executable
+# Make scripts executable
 RUN chmod +x scheduler.py
+RUN chmod +x app.py
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8000
 
-# Health check to ensure the container is running properly
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python health_check.py || exit 1
+# Expose the port
+EXPOSE 8000
 
-# Create a script to run the application
-CMD ["python", "scheduler.py"]
+# Start the application with gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]

@@ -4,3 +4,5 @@ requests
 supabase
 schedule
 python-dotenv
+flask
+gunicorn
