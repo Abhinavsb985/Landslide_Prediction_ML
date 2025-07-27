@@ -43,13 +43,13 @@ def run_prediction_loop():
         # Wait for next interval
         time.sleep(300)  # 300 seconds = 5 minutes
 
-# Start prediction thread
-try:
-    prediction_thread = threading.Thread(target=run_prediction_loop, daemon=True)
-    prediction_thread.start()
-    print("Prediction thread started successfully")
-except Exception as e:
-    print(f"Error starting prediction thread: {str(e)}")
+def start_prediction_thread():
+    try:
+        prediction_thread = threading.Thread(target=run_prediction_loop, daemon=True)
+        prediction_thread.start()
+        print("Prediction thread started successfully")
+    except Exception as e:
+        print(f"Error starting prediction thread: {str(e)}")
 
 @app.route('/')
 def health_check():
@@ -62,5 +62,6 @@ def health_check():
     })
 
 if __name__ == "__main__":
+    start_prediction_thread()
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
