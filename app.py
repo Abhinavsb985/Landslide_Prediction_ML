@@ -15,10 +15,7 @@ last_error = None
 
 def run_prediction_loop():
     global last_prediction_time, last_prediction_status, last_error
-    
-    # Wait for 10 seconds before starting predictions to let Flask initialize
-    time.sleep(10)
-    
+    print(f"[{datetime.now()}] Prediction thread started!")
     while True:
         try:
             print(f"\n[{datetime.now()}] Starting landslide prediction...")
@@ -40,8 +37,9 @@ def run_prediction_loop():
             print(f"[{datetime.now()}] Error in prediction:")
             print(traceback.format_exc())
         
+        print(f"[{datetime.now()}] Waiting 3 minutes for next prediction...")
         # Wait for next interval
-        time.sleep(300)  # 300 seconds = 5 minutes
+        time.sleep(180)  # 180 seconds = 3 minutes
 
 def start_prediction_thread():
     try:
