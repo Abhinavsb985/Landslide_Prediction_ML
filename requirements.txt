@@ -1,6 +1,8 @@
+Flask==2.0.1
 pandas
 scikit-learn
 numpy
 schedule
 requests
 python-dotenv
+gunicorn
