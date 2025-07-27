@@ -1,0 +1,151 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report, r2_score, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+
+# --- 1. Load and Prepare the Data ---
+
+# Load the dataset
+try:
+    data = pd.read_csv('landslide_data_500.csv')
+except FileNotFoundError:
+    print("Error: 'landslide_data.csv' not found. Make sure the CSV file is in the same directory.")
+    exit()
+
+# Convert categorical 'soil_type' to numbers
+le = LabelEncoder()
+data['soil_type_encoded'] = le.fit_transform(data['soil_type'])
+
+# Define features (X) and targets (y)
+# Features for the first prediction step (predicting tomorrow's conditions)
+features_step1 = ['rainfall_24h_mm', 'rainfall_3h_mm', 'soil_moisture_pct', 'pore_water_pressure_kpa', 
+                 'soil_type_encoded', 'slope_degrees', 'expected_tomorrow_rainfall_24h_mm']
+
+# Targets for the first step
+targets_step1 = ['tomorrows_soil_moisture_pct', 'tomorrows_pore_water_pressure_kpa']
+
+# Target for the second step (predicting landslide occurrence)
+target_step2 = 'landslide_tomorrow'
+
+# Split data for training and testing
+X_train, X_test, y_train, y_test = train_test_split(
+    data[features_step1], 
+    data[targets_step1 + [target_step2]], 
+    test_size=0.2, 
+    random_state=42
+)
+
+y_train_step1 = y_train[targets_step1]
+y_test_step1 = y_test[targets_step1]
+y_train_step2 = y_train[target_step2]
+y_test_step2 = y_test[target_step2]
+
+
+# --- 2. Step 1: Predict Tomorrow's Soil Moisture and Pore Water Pressure (Regression) ---
+
+print("--- Training Step 1: Predicting Tomorrow's Soil Conditions ---")
+
+# Initialize and train the regression model
+# A RandomForestRegressor is a good general-purpose model
+regressor = RandomForestRegressor(n_estimators=500, random_state=42)
+regressor.fit(X_train, y_train_step1)
+
+# Make predictions on the test set
+predictions_step1 = regressor.predict(X_test)
+
+# Evaluate the regression model
+mae = mean_absolute_error(y_test_step1, predictions_step1)
+r2 = r2_score(y_test_step1, predictions_step1)
+print(f"Mean Absolute Error for predicting soil conditions: {mae:.2f}")
+print(f"R-squared for predicting soil conditions: {r2:.2f}")
+print("-" * 30)
+
+
+# --- 3. Step 2: Predict Landslide Risk (Classification) ---
+
+print("\n--- Training Step 2: Predicting Landslide Risk ---")
+
+# Prepare the training data for the classifier
+# The features are the original features PLUS the predicted conditions from Step 1
+X_train_step2 = X_train.copy()
+X_train_step2['predicted_soil_moisture'] = y_train_step1['tomorrows_soil_moisture_pct']
+X_train_step2['predicted_pore_pressure'] = y_train_step1['tomorrows_pore_water_pressure_kpa']
+
+# Initialize and train the classification model
+classifier = RandomForestClassifier(n_estimators=500, random_state=42)
+classifier.fit(X_train_step2, y_train_step2)
+
+# Prepare the test data for the classifier
+X_test_step2 = X_test.copy()
+X_test_step2['predicted_soil_moisture'] = predictions_step1[:, 0]  # First column of the regressor's output
+X_test_step2['predicted_pore_pressure'] = predictions_step1[:, 1] # Second column
+
+# Make the final landslide predictions
+predictions_step2 = classifier.predict(X_test_step2)
+
+# Evaluate the classification model
+accuracy = accuracy_score(y_test_step2, predictions_step2)
+cm = confusion_matrix(y_test_step2, predictions_step2)
+print(f"Accuracy of the landslide prediction model: {accuracy:.2f}")
+print("\nConfusion Matrix:")
+print(cm)
+print("\nClassification Report:")
+print(classification_report(y_test_step2, predictions_step2))
+print("-" * 30)
+
+
+# --- 4. Example: Predict for a New Day ---
+
+print("\n--- Example Prediction for New Data ---")
+
+# Create a new data point for today's conditions and tomorrow's forecast
+# You can change these values to see different predictions
+new_data_today = pd.DataFrame({
+    'rainfall_24h_mm': [10],
+    'rainfall_3h_mm': [4],
+    'soil_moisture_pct': [7],
+    'pore_water_pressure_kpa': [6],
+    'soil_type': ['clay'],  # Use the original categorical feature
+    'slope_degrees': [37],
+    'expected_tomorrow_rainfall_24h_mm': [45]  # Tomorrow's forecasted 24h rainfall
+})
+
+print("Input data for today:")
+print(new_data_today)
+
+# Preprocess the new data (encode 'soil_type')
+new_data_today['soil_type_encoded'] = le.transform(new_data_today['soil_type'])
+new_data_step1 = new_data_today[features_step1]
+
+# Step 1: Predict tomorrow's soil conditions for the new data
+predicted_conditions_new = regressor.predict(new_data_step1)
+print(f"\nPredicted Tomorrow's Soil Moisture: {predicted_conditions_new[0, 0]:.2f}%")
+print(f"Predicted Tomorrow's Pore Water Pressure: {predicted_conditions_new[0, 1]:.2f} kPa")
+
+# Step 2: Use predicted conditions to predict landslide risk
+new_data_step2 = new_data_step1.copy()
+new_data_step2['predicted_soil_moisture'] = predicted_conditions_new[:, 0]
+new_data_step2['predicted_pore_pressure'] = predicted_conditions_new[:, 1]
+
+final_prediction = classifier.predict(new_data_step2)
+final_prediction_proba = classifier.predict_proba(new_data_step2)
+
+print("\n--- Final Prediction ---")
+# Determine risk level based on probability
+prob = final_prediction_proba[0][1]
+if prob >= 0.7:
+    risk_label = "High Risk"
+elif prob >= 0.3:
+    risk_label = "Medium Risk"
+else:
+    risk_label = "Low Risk"
+print(f"Predicted Landslide Risk for Tomorrow: {risk_label} (Probability: {prob:.2f})")
+print("-" * 30)
+
+# To run this code:
+# 1. Make sure you have pandas and scikit-learn installed:
+#    pip install pandas scikit-learn
+# 2. Save the code as 'landslide_prediction.py'.
+# 3. Place 'landslide_data.csv' in the same directory.
+# 4. Run from your terminal: python landslide_prediction.py
