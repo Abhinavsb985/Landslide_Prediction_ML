@@ -41,7 +41,7 @@ def run_prediction_loop():
             print(traceback.format_exc())
         
         # Wait for next interval
-        time.sleep(300)  # 300 seconds = 5 minutes
+        time.sleep(120)  # 120 seconds = 2 minutes
 
 # Start prediction thread
 try:
