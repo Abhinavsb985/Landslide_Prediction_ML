@@ -82,8 +82,11 @@ def get_latest_sensor_data():
     try:
         result = supabase.table('real_sensor_data')\
             .select('*')\
+            .order('id', desc=True)\
             .limit(1)\
             .execute()
+        
+        print(f"Database query result: {result.data}")
         
         if result.data:
             return result.data[0]

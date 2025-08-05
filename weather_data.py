@@ -50,11 +50,10 @@ def get_latest_conditions():
     if sensor_data:
         return {
             'soil_moisture_pct': sensor_data['soil_moisture'],
-            'pore_water_pressure_kpa': 10.5  # Hardcoded typical value in kPa
+            'pore_water_pressure_kpa': sensor_data['pore_water_pressure']  # Use actual value from database
         }
     print("No soil moisture data found in real_sensor_data table")
-    raise ValueError("No sensor data available")
-
+  
 # Shirur specific soil and terrain information
 SHIRUR_INFO = {
     'soil_type': 'clay',  # Predominant soil type in Shirur

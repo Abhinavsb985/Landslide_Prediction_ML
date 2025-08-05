@@ -53,7 +53,7 @@ def main():
 
     # Initialize and train the regression model
     # A RandomForestRegressor is a good general-purpose model
-    regressor = RandomForestRegressor(n_estimators=500, random_state=42)
+    regressor = RandomForestRegressor(n_estimators=10000, random_state=42)
     regressor.fit(X_train, y_train_step1)
 
     # Make predictions on the test set
@@ -121,7 +121,11 @@ def main():
     print(f"Last 3 Hours Rainfall: {weather_data['current_3h_rain']:.1f} mm")
     print(f"Soil Type: {SHIRUR_INFO['soil_type']}")
     print(f"Current Soil Moisture: {SHIRUR_INFO['soil_moisture_pct']:.1f}%")
-    print(f"Current Pore Water Pressure: {SHIRUR_INFO['pore_water_pressure_kpa']:.1f} kPa")
+    pore_water_pressure = SHIRUR_INFO['pore_water_pressure_kpa']
+    if pore_water_pressure is not None:
+        print(f"Current Pore Water Pressure: {pore_water_pressure:.1f} kPa")
+    else:
+        print("Current Pore Water Pressure: N/A kPa")
     print(f"Terrain Slope: {SHIRUR_INFO['slope_degrees']:.1f}°")
 
     print("\n=== Weather Forecast ===")
